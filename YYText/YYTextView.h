@@ -46,10 +46,11 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)textView:(YYTextView *)textView didTapHighlight:(YYTextHighlight *)highlight inRange:(NSRange)characterRange rect:(CGRect)rect;
 - (BOOL)textView:(YYTextView *)textView shouldLongPressHighlight:(YYTextHighlight *)highlight inRange:(NSRange)characterRange;
 - (void)textView:(YYTextView *)textView didLongPressHighlight:(YYTextHighlight *)highlight inRange:(NSRange)characterRange rect:(CGRect)rect;
-- (void)test;
+
 @end
 
 @protocol MM_yyTextViewDelegate <NSObject>
+@optional
 /**
  键盘选完字符后回调
 
