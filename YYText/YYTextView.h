@@ -49,6 +49,34 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)test;
 @end
 
+@protocol MM_yyTextViewDelegate <NSObject>
+/**
+ 键盘选完字符后回调
+
+ @param textView textView description
+ @param markedTextRange markedTextRange description
+ */
+- (void)mm_textViewDidUnmarkTextWithTextView:(YYTextView*)textView Range:(YYTextRange*)markedTextRange;
+
+/**
+ 字符串变动
+
+ @param textView textView description
+ @param range range description
+ */
+- (void)mm_textViewDidChange:(YYTextView *)textView range:(NSRange)range;
+
+/**
+ 粘贴后
+
+ @param textView textView description
+ @param range range description
+ @param newAttr newAttr description
+ @param replace replace description
+ */
+- (void)mm_textViewDidPaste:(YYTextView*)textView range:(NSRange)range newAttr:(NSAttributedString*)newAttr replace:(BOOL)replace;
+
+@end
 
 #if !TARGET_INTERFACE_BUILDER
 
@@ -78,6 +106,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 @property (nullable, nonatomic, weak) id<YYTextViewDelegate> delegate;
 
+@property (nonatomic,weak,nullable) id<MM_yyTextViewDelegate> mmDelegate;
 
 #pragma mark - Configuring the Text Attributes
 ///=============================================================================

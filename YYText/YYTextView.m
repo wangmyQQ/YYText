@@ -2977,7 +2977,7 @@ typedef NS_ENUM(NSUInteger, YYTextMoveDirection) {
             atr = attText;
         }
     }
-    
+    NSRange selectRange = _selectedRange;
     if (atr) {
         NSUInteger endPosition = _selectedTextRange.start.offset + atr.length;
         NSMutableAttributedString *text = _innerText.mutableCopy;
@@ -2988,6 +2988,16 @@ typedef NS_ENUM(NSUInteger, YYTextMoveDirection) {
         range = [self _correctedTextRange:range];
         if (range) {
             self.selectedRange = NSMakeRange(range.end.offset, 0);
+        }
+        if ([self.mmDelegate respondsToSelector:@selector(mm_textViewDidPaste:range:newAttr:replace:)]) {
+            BOOL replace = selectRange.length>0?YES:NO;
+            NSRange resultRange;
+            if (replace) {
+                resultRange = selectRange;
+            }else{
+                resultRange = NSMakeRange(range.asRange.location- atr.length, atr.length);
+            }
+            [self.mmDelegate mm_textViewDidPaste:self range:resultRange newAttr:atr replace:replace];
         }
     } else {
         NSString *string = p.string;
@@ -3344,7 +3354,14 @@ typedef NS_ENUM(NSUInteger, YYTextMoveDirection) {
     if (!markedText) markedText = @"";
     if (_markedTextRange == nil) {
         _markedTextRange = [YYTextRange rangeWithRange:NSMakeRange(_selectedTextRange.end.offset, markedText.length)];
-        [_innerText replaceCharactersInRange:NSMakeRange(_selectedTextRange.end.offset, 0) withString:markedText];
+//        [_innerText replaceCharactersInRange:NSMakeRange(_selectedTextRange.end.offset, 0) withString:markedText];
+        // !!!: Custom_FIX BUG, This is not good idea, but...
+        if (_selectedTextRange.end.offset > _innerText.length) {
+            [_innerText replaceCharactersInRange:NSMakeRange(_innerText.length, 0) withString:markedText];
+        } else {
+            [_innerText replaceCharactersInRange:NSMakeRange(_selectedTextRange.end.offset, 0) withString:markedText];
+        }
+
         _selectedTextRange = [YYTextRange rangeWithRange:NSMakeRange(_selectedTextRange.start.offset + selectedRange.location, selectedRange.length)];
     } else {
         _markedTextRange = [self _correctedTextRange:_markedTextRange];
@@ -3381,6 +3398,12 @@ typedef NS_ENUM(NSUInteger, YYTextMoveDirection) {
 }
 
 - (void)unmarkText {
+    if (self.mmDelegate && [self.mmDelegate respondsToSelector:
+                            @selector(mm_textViewDidUnmarkTextWithTextView:Range:)]) {
+        YYTextRange *range = [_markedTextRange copy];
+        [self.mmDelegate mm_textViewDidUnmarkTextWithTextView:self Range:range];
+    }
+    
     _markedTextRange = nil;
     [self _endTouchTracking];
     [self _hideMenu];
@@ -3450,6 +3473,13 @@ typedef NS_ENUM(NSUInteger, YYTextMoveDirection) {
     if ([self.delegate respondsToSelector:@selector(textViewDidChange:)]) {
         [self.delegate textViewDidChange:self];
     }
+
+    if (self.mmDelegate && [self.mmDelegate respondsToSelector:
+                            @selector(mm_textViewDidChange:range:)]) {
+        [self.mmDelegate mm_textViewDidChange:self
+                                        range:NSMakeRange(range.asRange.location, text.length)];
+    }
+
     [[NSNotificationCenter defaultCenter] postNotificationName:YYTextViewTextDidChangeNotification object:self];
     
     _lastTypeRange = _selectedTextRange.asRange;
